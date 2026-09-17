@@ -5,6 +5,11 @@
 она скачивается из официального репозитория модели одной командой. Манифест контрольных сумм:
 `models/SHA256SUMS`, проверка: `.venv_311\Scripts\python.exe tools\verify_models.py`.
 
+**Все ссылки на загрузку моделей собраны в одном месте — в релизе
+[models-v2.6.1](../../releases/tag/models-v2.6.1).** Там же вложением лежит архив голосовых
+моделей `aila-models-voices.zip` (428 МБ) — прямая ссылка:
+https://github.com/SN1054NGC/aila_web_git/releases/download/models-v2.6.1/aila-models-voices.zip
+
 ## Языковая модель (обязательна)
 
 | Файл | Размер | Где взять |
@@ -39,6 +44,9 @@
 | `models/silero/v3_1_ru.pt` | 59 МБ | https://models.silero.ai/models/tts/ru/v3_1_ru.pt | MIT |
 | `models/silero/v3_en.pt` | 54.5 МБ | https://models.silero.ai/models/tts/en/v3_en.pt | MIT |
 | `models/piper/ru_RU-irina-medium.onnx` + `.json` | 60.3 МБ | rhasspy/piper-voices | MIT |
+
+Все голосовые модели одним архивом (428 МБ) — во вложениях релиза
+[models-v2.6.1](../../releases/tag/models-v2.6.1): `aila-models-voices.zip`.
 | `models/piper/en_US-amy-medium.onnx` + `.json` | 60.3 МБ | rhasspy/piper-voices | MIT |
 
 Silero — основной движок (голос `baya`, 24 кГц, как в первой версии), Piper — запасной.

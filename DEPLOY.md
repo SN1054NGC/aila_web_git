@@ -30,6 +30,8 @@ MODELS.md                какие модели нужны, откуда и и�
 * языковая модель (GGUF 4.6 ГиБ) — качается с
   https://huggingface.co/yandex/YandexGPT-5-Lite-8B-instruct-GGUF скриптом
   `tools/fetch_llm_model.py` (GitHub не принимает объекты больше 2 ГиБ);
+* ссылки на все модели и архив голосовых — в релизе
+  [models-v2.6.1](../../releases/tag/models-v2.6.1);
 * документация и заметки о версиях (`README_LOCAL.md`, `VERSION`, `RELEASE-*.md`,
   `PROJECT_AUDIT.md`) — хранятся только в локальной копии проекта: в них есть сведения
   о рабочем документе;
