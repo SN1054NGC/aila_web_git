@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Айла — локальный ассистент</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo">А</div>
+      <div>
+        <div class="brand-title">Айла</div>
+        <div class="brand-sub">локально · без интернета</div>
+      </div>
+    </div>
+
+    <section class="card">
+      <h3>Документы</h3>
+      <div class="drop" id="drop">
+        <div class="drop-icon">XLSX</div>
+        <div class="drop-text">Перетащите Excel сюда<br>или нажмите, чтобы выбрать</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" hidden>
+      </div>
+      <div class="kv" id="ragInfo">
+        <div><span>Источник</span><b id="ragSource">—</b></div>
+        <div><span>Документов</span><b id="ragDocs">0</b></div>
+        <div><span>Листы</span><b id="ragSheets">—</b></div>
+      </div>
+      <div class="progress" id="progress"><div class="bar" id="progressBar"></div></div>
+      <div class="btn-row">
+        <button class="btn ghost" id="clearRag">Очистить базу</button>
+        <button class="btn ghost" id="testSearch">Проверить поиск</button>
+      </div>
+      <div class="hint" id="searchOut"></div>
+    </section>
+
+    <section class="card">
+      <h3>Голос Айлы</h3>
+      <label class="check">
+        <input type="checkbox" id="ttsOn" checked>
+        <span>Озвучивать ответы</span>
+      </label>
+      <label class="field">
+        <span>Голос</span>
+        <select id="voiceSel"><option value="">— по умолчанию —</option></select>
+      </label>
+      <label class="field">
+        <span>Язык ответа</span>
+        <select id="langSel">
+          <option value="auto">Авто</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Скорость речи: <b id="rateVal">1.0</b></span>
+        <input type="range" id="rate" min="0.7" max="1.4" step="0.05" value="1">
+      </label>
+      <label class="field">
+        <span>Пауза между фразами: <b id="pauseScaleVal">1.0×</b></span>
+        <input type="range" id="pauseScale" min="0.4" max="2.5" step="0.1" value="1">
+      </label>
+      <div class="btn-row">
+        <button class="btn ghost" id="speakLast">Произнести ответ</button>
+        <button class="btn ghost" id="reloadTts">Перезагрузить TTS</button>
+      </div>
+      <div class="hint" id="ttsInfo">—</div>
+    </section>
+
+    <section class="card">
+      <h3>Микрофон</h3>
+      <label class="field">
+        <span>Язык распознавания</span>
+        <select id="sttLang">
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Пауза перед остановкой записи: <b id="pauseVal">1.8 с</b></span>
+        <input type="range" id="pause" min="0.5" max="8" step="0.1" value="1.8">
+      </label>
+      <label class="check">
+        <input type="checkbox" id="autoSend" checked>
+        <span>Отправлять сразу после речи</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="vadOn" checked>
+        <span>Останавливать по тишине</span>
+      </label>
+      <div class="hint">Если не успеваете договорить — увеличьте паузу. Пока идёт отсчёт, запись
+      продолжается; нажмите «Микрофон» ещё раз, чтобы отправить сразу.</div>
+      <div class="hint">Микрофон работает при открытии страницы как <b>localhost</b>. Alt+M — быстрый старт и стоп.</div>
+      <div class="hint" id="sttInfo">—</div>
+    </section>
+
+    <section class="card">
+      <h3>Состояние</h3>
+      <div class="kv" id="stateBox">
+        <div><span>LLM</span><b id="stLlm">—</b></div>
+        <div><span>Поиск</span><b id="stRag">—</b></div>
+        <div><span>TTS</span><b id="stTts">—</b></div>
+        <div><span>STT</span><b id="stStt">—</b></div>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="ragOn" checked>
+        <span>Искать по документации</span>
+      </label>
+      <button class="btn ghost wide" id="refresh">Обновить состояние</button>
+      <div class="hint" id="stateHint"></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" title="Панель">≡</button>
+      <div class="pills">
+        <span class="pill" id="pillLlm"><i></i>LLM</span>
+        <span class="pill" id="pillRag"><i></i>Поиск</span>
+        <span class="pill" id="pillTts"><i></i>TTS</span>
+        <span class="pill" id="pillStt"><i></i>Микрофон</span>
+      </div>
+      <div class="grow"></div>
+      <span class="pill state" id="pillWs"><i></i>соединение</span>
+    </header>
+
+    <div class="chat" id="chat">
+      <div class="msg assistant">
+        <div class="bubble">
+          <p>Здравствуйте! Я Айла — работаю полностью локально, без интернета.</p>
+          <p>Спросите про оборудование СИКН, график ТО, поверку — или нажмите <b>микрофон</b> и говорите.</p>
+          <p class="muted">Примеры: «какое оборудование под кодом 3», «когда проводят ТО-3», «график ТО влагомера».</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="jump" id="jumpBtn" hidden>к последнему сообщению</button>
+
+    <div class="composer">
+      <div class="rec" id="recBar" hidden>
+        <div class="rec-head">
+          <span class="dot"></span>
+          <span>Идёт запись</span>
+          <span class="rec-time" id="recTime">0.0 с</span>
+          <button class="rec-cancel" id="recCancel" type="button">отменить</button>
+        </div>
+        <canvas class="viz" id="viz"></canvas>
+        <div class="rec-foot">
+          <span class="rec-live" id="recLive">…</span>
+          <span class="rec-hint" id="recHint">говорите, я слушаю</span>
+        </div>
+      </div>
+      <textarea id="input" rows="1" placeholder="Введите вопрос… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
+      <div class="composer-row">
+        <button class="btn mic" id="micBtn" title="Микрофон (Alt+M)">
+          <span class="mic-ring" aria-hidden="true"></span><span id="micLabel">Микрофон</span>
+        </button>
+        <button class="btn ghost" id="stopBtn" hidden>Остановить</button>
+        <div class="grow"></div>
+        <span class="speaking" id="speakState" hidden><i></i>Айла говорит</span>
+        <span class="counter" id="counter"></span>
+        <button class="btn primary" id="sendBtn">Отправить</button>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="toasts" id="toasts"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

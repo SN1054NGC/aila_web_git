@@ -1,0 +1,31 @@
+# окружение — ставится на месте, не версионируется
+.venv_311/
+.venv/
+__pycache__/
+*.pyc
+
+# языковая модель (GGUF) в git не кладётся: ссылка в MODELS.md
+*.gguf
+*.part
+*.download
+
+# секреты и приватные данные — только локально, в git не попадают
+.env
+.env.*
+secrets/
+private/
+local-only/
+*.key
+*.pem
+*.token
+credentials*
+
+# база знаний, кэш, логи
+rag_db/
+data/rag_index.json
+logs/
+snapshots/
+.mypy_cache/
+
+# рабочие документы и выгрузки: только локально, в git не попадают
+uploads/

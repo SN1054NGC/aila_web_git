@@ -1,0 +1,13 @@
+# Единые переводы строк: проект собирается на Windows, .bat требуют CRLF
+* -text
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+models/**/*.pt filter=lfs diff=lfs merge=lfs -text
+models/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+models/vosk/** filter=lfs diff=lfs merge=lfs -text
