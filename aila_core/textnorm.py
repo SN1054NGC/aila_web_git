@@ -405,6 +405,40 @@ _SERIAL_MARK = "\u241f"                       # временная метка в
 _SENT_BOUNDARY_RE = re.compile(r"(?<=[.!?…])\s+|\n+")
 
 
+_SERIAL_QUESTION_RE = re.compile(
+    r"заводск\w*\s*(?:номер|№)|серийн\w*\s*(?:номер|№)|зав\.?\s*(?:№|номер)",
+    re.IGNORECASE)
+
+
+def asks_serials(question: str) -> bool:
+    """Спрашивают ли в вопросе заводской (серийный) номер."""
+    return bool(_SERIAL_QUESTION_RE.search(question or ""))
+
+
+def read_serials(text: str) -> str:
+    """Прочитать заводской номер по цифрам — для случая, когда о нём спросили."""
+    def repl(match: re.Match[str]) -> str:
+        digits = re.sub(r"\D", "", match.group(0))
+        if not digits:
+            return "заводской номер"
+        return "заводской номер " + "-".join(num2words_ru(int(digit)) for digit in digits)
+
+    return _SERIAL_RE.sub(repl, text)
+
+
+def strip_serials(text: str) -> str:
+    """Убрать значения заводских номеров из речи — без пометок и без цифр."""
+    if not _SERIAL_RE.search(text):
+        return text
+    result = _SERIAL_RE.sub("", text)
+    result = re.sub(r"\s*,\s*(?=[,;.!?])", "", result)
+    result = re.sub(r"\s*;\s*(?=[.!?,;])", ";", result)
+    result = re.sub(r"\s+([,;.!?])", r"\1", result)
+    result = re.sub(r"([,;])\1+", r"\1", result)
+    result = re.sub(r"\(\s*\)", "", result)
+    return re.sub(r"\s{2,}", " ", result)
+
+
 def count_serials(text: str) -> int:
     """Сколько заводских номеров в тексте."""
     return len(_SERIAL_RE.findall(text))

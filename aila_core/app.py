@@ -188,6 +188,7 @@ class Session:
         self.rag_on = True
         self.lang = "auto"
         self.pause_scale = config.TTS_PAUSE_SCALE   # пауза между фразами (ползунок в GUI)
+        self.keep_serials = False                   # читать ли заводские номера (только если спросили)
         self.voice: str = ""                        # выбранный голос (список в GUI)
         self.tts_queue: asyncio.Queue = asyncio.Queue()
         self.tts_worker: asyncio.Task | None = None
@@ -326,6 +327,8 @@ class Session:
         if lang == "auto":
             lang = textnorm.detect_lang(question)
         self.cancel = asyncio.Event()
+        # Заводские номера озвучиваем только если о них спросили в вопросе
+        self.keep_serials = textnorm.asks_serials(question)
         await self.send({"type": "start", "lang": lang})
 
         # Вопросы про дату, день недели и номер недели отвечаем точно и мгновенно:
@@ -448,7 +451,8 @@ class Session:
                 continue
             try:
                 chunks = await asyncio.to_thread(TTS.chunks, item["text"], item["lang"],
-                                                 self.pause_scale, self.voice or None)
+                                                 self.pause_scale, self.voice or None,
+                                                 self.keep_serials)
             except Exception as exc:
                 log.warning("TTS: %s", exc)
                 chunks = []

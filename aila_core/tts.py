@@ -453,16 +453,20 @@ class TTSService:
             "en": [{"id": i, "label": label} for i, label in self.engine.voices("en")],
         }
 
-    def prepare_text(self, text: str, lang: str = "auto") -> str:
+    def prepare_text(self, text: str, lang: str = "auto", keep_serials: bool = False) -> str:
         if lang == "auto":
             lang = textnorm.detect_lang(text)
+        if keep_serials:
+            text = textnorm.read_serials(text)       # спросили номер — читаем по цифрам
+        else:
+            text = textnorm.strip_serials(text)      # иначе зав.№ вслух не читаем
         normalized = textnorm.normalize_for_speech(text, lang)
         if lang == "ru":
             normalized = accents_mod.apply_accents(normalized, self.dictionary, self.engine.marker)
         return normalized
 
     def chunks(self, text: str, lang: str = "auto", pause_scale: float = 1.0,
-               voice: str | None = None) -> list[dict]:
+               voice: str | None = None, keep_serials: bool = False) -> list[dict]:
         """Готовые фрагменты для отправки в браузер: WAV + пауза после него.
 
         Язык определяется по КАЖДОМУ предложению: английские вставки в русском ответе
@@ -471,8 +475,9 @@ class TTSService:
         if not self.ready:
             return []
         base_lang = lang if lang in ("ru", "en") else textnorm.detect_lang(text)
-        # Заводские номера вслух не читаем: вместо них одна пометка «…— в чате»
-        text = textnorm.replace_serials_once(text)
+        if not keep_serials:
+            # Заводские номера вслух не читаем: в речи остаются прибор, вид ТО/КМХ и даты.
+            text = textnorm.strip_serials(text)
         sentences = textnorm.split_sentences(text, config.TTS_MAX_CHUNK, merge=False)
 
         # Группируем соседние предложения одного языка: русские читает русский голос,
@@ -492,7 +497,7 @@ class TTSService:
 
         out: list[dict] = []
         for index, (part_lang, sentences_of_lang) in enumerate(groups):
-            prepared = self.prepare_text(" ".join(sentences_of_lang), part_lang)
+            prepared = self.prepare_text(" ".join(sentences_of_lang), part_lang, keep_serials)
             try:
                 pcm = self.engine.synth(prepared, part_lang, voice)
             except Exception as exc:
