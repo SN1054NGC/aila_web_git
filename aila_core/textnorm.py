@@ -314,7 +314,7 @@ _MD_DECOR_RE = re.compile(r"(\*\*|__|\*|_|[\x60]{1,3}|^#{1,6}\s*)", flags=re.MUL
 _WS_RE = re.compile(r"[ \t\u00a0]+")
 _NL_RE = re.compile(r"\n{2,}")
 _SLASH_RE = re.compile(r"(?<=[0-9A-Za-zА-Яа-яЁё])\s*/\s*(?=[0-9A-Za-zА-Яа-яЁё])")
-_ALLOWED_RE = re.compile(r"[^0-9A-Za-zА-Яа-яЁё \t\n.,!?;:()«»\"'\-—–/]")
+_ALLOWED_RE = re.compile(r"[^0-9A-Za-zА-Яа-яЁё \t\n.,!?;:…()«»\"'\-—–/]")
 
 _HAS_LATIN_RE = re.compile(r"[A-Za-z]")
 _HAS_CYR_RE = re.compile(r"[А-Яа-яЁё]")
@@ -397,7 +397,7 @@ def _ru_specific_tokens(text: str) -> str:
 # «зав.№ 000103», «зав. № 123», «заводской номер: 123» — значение заводского номера
 # вслух не читаем: произносим только «заводской номер», цифры выбрасываем.
 _SERIAL_RE = re.compile(
-    r"\bзав(?:одск\w*)?\.?\s*(?:№|номер|ном\.?)\s*[:№]?\s*[\w\-/]*",
+    r"\bзав(?:одск\w*)?\.?\s*(?:№|номер|ном\.?)\s*[:№]?\s*\d[\w\-/]*",
     re.IGNORECASE)
 
 
@@ -420,7 +420,9 @@ def replace_serials_once(text: str) -> str:
     matches = list(_SERIAL_RE.finditer(text))
     if not matches:
         return text
-    note = "заводской номер — в чате" if len(matches) == 1 else "заводские номера — в чате"
+    # многоточие в конце — это граница фразы: после пометки синтез делает паузу
+    note = ("заводской номер вывела в чат…" if len(matches) == 1
+            else "заводские номера вывела в чат…")
     parts: list[str] = []
     last = 0
     for position, match in enumerate(matches):
@@ -434,6 +436,7 @@ def replace_serials_once(text: str) -> str:
     result = re.sub(r"\s+([,;.!?])", r"\1", result)
     result = re.sub(r"([,;])\1+", r"\1", result)
     result = re.sub(r"\(\s*\)", "", result)
+    result = re.sub(r"…\s*[,;]?\s*", "… ", result)      # «…,» -> «… » — граница фразы
     return re.sub(r"\s{2,}", " ", result)
 
 
