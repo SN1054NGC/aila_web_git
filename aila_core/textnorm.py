@@ -405,6 +405,38 @@ _SERIAL_MARK = "\u241f"                       # временная метка в
 _SENT_BOUNDARY_RE = re.compile(r"(?<=[.!?…])\s+|\n+")
 
 
+def count_serials(text: str) -> int:
+    """Сколько заводских номеров в тексте."""
+    return len(_SERIAL_RE.findall(text))
+
+
+def replace_serials_once(text: str) -> str:
+    """Убрать значения заводских номеров, оставив одну пометку про чат.
+
+    Первое вхождение заменяется фразой «заводской номер — в чате» (или «заводские
+    номера — в чате»), остальные вырезаются совсем: перечисление номеров вслух
+    не читается, но слушатель понимает, где искать значения.
+    """
+    matches = list(_SERIAL_RE.finditer(text))
+    if not matches:
+        return text
+    note = "заводской номер — в чате" if len(matches) == 1 else "заводские номера — в чате"
+    parts: list[str] = []
+    last = 0
+    for position, match in enumerate(matches):
+        parts.append(text[last:match.start()])
+        parts.append(note if position == 0 else "")
+        last = match.end()
+    parts.append(text[last:])
+    result = "".join(parts)
+    result = re.sub(r"\s*,\s*(?=[,;.!?])", "", result)
+    result = re.sub(r"\s*;\s*(?=[.!?,;])", ";", result)
+    result = re.sub(r"\s+([,;.!?])", r"\1", result)
+    result = re.sub(r"([,;])\1+", r"\1", result)
+    result = re.sub(r"\(\s*\)", "", result)
+    return re.sub(r"\s{2,}", " ", result)
+
+
 def _ru_serials(text: str) -> str:
     """Значения заводских номеров вслух не читаем.
 

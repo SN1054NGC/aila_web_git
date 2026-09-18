@@ -471,6 +471,8 @@ class TTSService:
         if not self.ready:
             return []
         base_lang = lang if lang in ("ru", "en") else textnorm.detect_lang(text)
+        # Заводские номера вслух не читаем: вместо них одна пометка «…— в чате»
+        text = textnorm.replace_serials_once(text)
         sentences = textnorm.split_sentences(text, config.TTS_MAX_CHUNK, merge=False)
 
         # Группируем соседние предложения одного языка: русские читает русский голос,
