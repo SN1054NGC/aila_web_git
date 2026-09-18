@@ -401,9 +401,36 @@ _SERIAL_RE = re.compile(
     re.IGNORECASE)
 
 
+_SERIAL_MARK = "\u241f"                       # временная метка вместо номера
+_SENT_BOUNDARY_RE = re.compile(r"(?<=[.!?…])\s+|\n+")
+
+
 def _ru_serials(text: str) -> str:
-    """«зав.№ 902295» -> «заводской номер» (номер не произносится)."""
-    return _SERIAL_RE.sub("заводской номер", text)
+    """Значения заводских номеров вслух не читаем.
+
+    Один номер в предложении -> «заводской номер», несколько -> «заводские номера»
+    (один раз, повторы в перечислении убираем, чтобы речь не заикалась).
+    """
+    marked = _SERIAL_RE.sub(_SERIAL_MARK, text)
+    if _SERIAL_MARK not in marked:
+        return text
+    pieces: list[str] = []
+    for piece in _SENT_BOUNDARY_RE.split(marked):
+        count = piece.count(_SERIAL_MARK)
+        if count == 0:
+            pieces.append(piece)
+        elif count == 1:
+            pieces.append(piece.replace(_SERIAL_MARK, "заводской номер"))
+        else:
+            head, tail = piece.split(_SERIAL_MARK, 1)
+            pieces.append(head + "заводские номера" + tail.replace(_SERIAL_MARK, ""))
+    result = " ".join(pieces)
+    result = re.sub(r"\s*,\s*(?=[,;.!?])", "", result)   # «прибор, ;» -> «прибор;»
+    result = re.sub(r"\s*;\s*(?=[.!?,;])", ";", result)
+    result = re.sub(r"\s+([,;.!?])", r"\1", result)
+    result = re.sub(r"([,;])\1+", r"\1", result)
+    result = re.sub(r"\(\s*\)", "", result)
+    return result
 
 
 def _ru_number_series(raw: str) -> str:
